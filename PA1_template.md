@@ -30,10 +30,9 @@ Below we make a histogram of the total number of steps taken each day. Missing v
 
 ```r
 ## Histogram of step count
-with(total_steps, plot(date, steps, type = "h", 
-                       main = "Step Count per Day", 
-                       xlab = "Date", ylab = "Steps", 
-                       col = "blue", lwd = 4))
+hist(total_steps$steps, breaks = c(seq(0, 25000, by = 2000)), 
+     main = "Histogram of Step Counts", 
+     xlab = "Steps", col = "red")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
@@ -44,7 +43,7 @@ We can also calculate the average and median number of steps taken each day.
 tot_step_avg <- mean(total_steps$steps, na.rm = TRUE)
 tot_step_med <- median(total_steps$steps, na.rm = TRUE)
 ```
-From this calculation we see that the average number of steps per day is 9354 and the median is 10395. 
+From this calculation we see that the average number of steps per day is 9354 and the median is 10395. The histogram shows a nice (normal) distribution around the bin between 10-12 thousand steps.  The mean is shifted lower due to the large bin at zero steps.  
 
 ### What is the average daily activity pattern?
 In order to investigate the daily activity patterns we regroup the data by interval, and summarize by the mean step count. 
@@ -122,14 +121,24 @@ total_steps_no_miss <- summarise(by_date_no_miss,
 names(total_steps_no_miss) <- c("date", "steps")
 
 ## Remake histogram
-with(total_steps_no_miss, plot(date, steps, type = "h", 
-                          main = "Step Count per Day", 
-                          xlab = "Date", ylab = "Steps", 
-                          col = "green", lwd = 4))
+hist(total_steps_no_miss$steps, 
+     breaks = c(seq(0, 25000, by = 2000)), 
+     main = "Histogram of Step Counts (Missing Added)", 
+     xlab = "Steps", col = "red")
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-8-1.png) 
 
+When the missing values are replaced with the average for the interval, the large bin at zero steps shrinks. We also recalculate the mean and the median.
+
+
+```r
+tot_step_no_miss_avg <- mean(total_steps_no_miss$steps, 
+                             na.rm = TRUE)
+tot_step_no_miss_med <- median(total_steps_no_miss$steps, 
+                               na.rm = TRUE)
+```
+From this calculation we see that the average number of steps per day is 10749 and the median is 10641. With the missing values filled in the artificially high bin at zero steps is gone, and the number of steps are distributed normally around the mean bin. 
 
 ### Are there differences in activity patterns between weekdays and weekends?
 We add a column to the data frame with the day of the week, then subset into two groups 'weekday' and 'weekend.' 
@@ -165,7 +174,7 @@ xyplot(steps_avg ~ interval | day, by_day,
        type = "l", layout=c(1,2))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-10-1.png) 
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png) 
 
 The plot shows that overall patterns are similar between weekdays and weekends.  People start moving earlier on weekdays, and take more steps through the day, especially around the peak interval. This interval corresponds to the early afternoon; a possible interpretation is increased activity at lunch time while at work. Weekends on the other hand have a relatively flat distribution of steps through the day as well as fewer steps overall. Activity slows and ends a little later on the weekend too, suggesting a later bedtime. (Sunday and Friday nights can skew this).
 
