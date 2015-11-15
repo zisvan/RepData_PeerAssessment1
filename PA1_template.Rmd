@@ -32,7 +32,7 @@ names(total_steps) <- c("date", "steps")
 
 Below we make a histogram of the total number of steps taken each day. Missing values are ignored (na.rm = TRUE, but no clever replacement of missing values yet.)
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 ## Histogram of step count
 with(total_steps, plot(date, steps, type = "h", 
                        main = "Step Count per Day", 
@@ -41,19 +41,16 @@ with(total_steps, plot(date, steps, type = "h",
 ```
 
 We can also calculate the average and median number of steps taken each day.
-```{r}
+```{r, message = FALSE, warning = FALSE}
 tot_step_avg <- mean(total_steps$steps, na.rm = TRUE)
 tot_step_med <- median(total_steps$steps, na.rm = TRUE)
 ```
-From this calculation we see that the average number of steps per day is, `r round(tot_step_avg, digits=0)` and the median is, `r tot_step_med`. In the graph below, the above histogram has been overlayed with horizontal lines showing the mean and median step counts.
-```{r}
-# Code goes here to overlay histogram with mean and median
-```
+From this calculation we see that the average number of steps per day is `r round(tot_step_avg, digits=0)` and the median is `r tot_step_med`. 
 
 ### What is the average daily activity pattern?
 In order to investigate the daily activity patterns we regroup the data by interval, and summarize by the mean step count. 
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 ## group by interval, summarize
 by_interval <- group_by(activity, interval)
 mean_interval <- summarise(by_interval, mean(steps, na.rm = TRUE))
@@ -64,7 +61,7 @@ names(mean_interval) <- c("interval", "steps_avg")
 ```
 
 Now, we can plot the the number of steps per interval averaged over all days.  Remember that missing values are still being ignored.
-```{r}
+```{r, message = FALSE, warning = FALSE}
 with(mean_interval, plot(interval, steps_avg, type = "l", 
                        main = "Average Step Count by Interval", 
                        xlab = "Interval (minutes)", ylab = "Average Steps", 
@@ -74,20 +71,17 @@ axis(side=1, at=seq(0,2500, 250), labels=seq(0,2500,250), las = 2)
 
 From the graph we can see that the inerval with the highest number of steps lies somewhere between 750 and 1000 minutes. To obtain a more precise picture we calculate the maximum number of steps and find the interval when it happens exactly.
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 ## Find interval when step count is largest
 max_steps <- max(mean_interval$steps_avg, na.rm = TRUE)
 max_interval <- mean_interval$interval[which(mean_interval$steps_avg == max_steps)]
 ```
-The interval with the largest number of steps is interval `r max_interval` with a step count of `r round(max_steps, digits=0)`. Again, the graph has been updated with an overlay showing the maximum.
-```{r}
-# Code goes here to remake graph with overlay.  Or take out the blurb above.
-```
+The interval with the largest number of steps is interval `r max_interval` with a step count of `r round(max_steps, digits=0)`. 
 
 ### Inputing missing values
 Until now we ignored the missing values.  In order to reduce the bias this naive approach can introduce to the analysis, we replace missing step counts with the average step count across all days for the given interval.  
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 ## Keep data with missing values
 activity_missing <- as.data.frame(activity)
 ## Calculate number of NAs
@@ -116,7 +110,7 @@ activity_no_miss <- as.data.frame(activity)
 
 A total of `r na_count` missing values have been replaced with the interval average. We reproduce the original histogram with this data set.
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 ## Group, summarize, rename
 by_date_no_miss <- group_by(activity_no_miss, date)
 total_steps_no_miss <- summarise(by_date_no_miss, 
@@ -132,11 +126,39 @@ with(total_steps_no_miss, plot(date, steps, type = "h",
 
 ```
 
-The comparison of the histograms on the same set of axes below highlights the impact of replacing missing values. 
 
-```{r}
-## Code goes here to print histograms on the same set of axes
-
-## Might as well redo the line graph somewhere here.
-```
 ### Are there differences in activity patterns between weekdays and weekends?
+We add a column to the data frame with the day of the week, then subset into two groups 'weekday' and 'weekend.' 
+
+```{r, message = FALSE, warning = FALSE}
+# add a column to the data frame (the one with no missing values)
+day <- c("day")
+activity_no_miss[, day] <- "na"
+
+# fill new column with weekday or weekend
+for(i in 1:length(activity_no_miss$date)){
+  if(weekdays(activity_no_miss$date[i]) == "Saturday" |
+       weekdays(activity_no_miss$date[i]) == "Sunday"){
+    activity_no_miss$day[i] = "weekend"
+  } else{
+    activity_no_miss$day[i] = "weekday"
+  }
+}
+
+by_day <- activity_no_miss %>%
+  group_by(interval, day) %>%
+  summarise(mean(steps))
+
+names(by_day) <- c("interval", "day", "steps_avg")
+
+```
+
+We then plot the data to compare the activity behavior on weekdays and weekends.
+```{r, message = FALSE, warning = FALSE}
+library(lattice)
+xyplot(steps_avg ~ interval | day, by_day, 
+       type = "l", layout=c(1,2))
+```
+
+The plot shows that overall patterns are similar between weekdays and weekends.  People start moving earlier on weekdays, and take more steps through the day, especially around the peak interval. This interval corresponds to the early afternoon; a possible interpretation is increased activity at lunch time while at work. Weekends on the other hand have a relatively flat distribution of steps through the day as well as fewer steps overall. Activity slows and ends a little later on the weekend too, suggesting a later bedtime. (Sunday and Friday nights can skew this).
+
